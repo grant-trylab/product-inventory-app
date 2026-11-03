@@ -6,6 +6,12 @@
   <meta name="theme-color" content="#2457c5">
   <title>產品庫存查詢</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .search-box{position:relative}
+    .suggestion-list{position:absolute;z-index:10;top:100%;left:0;right:0;max-height:18rem;overflow-y:auto;background:#fff;border:1px solid #cbd5e1;border-radius:0 0 10px 10px;box-shadow:0 8px 18px #1720331a}
+    .suggestion-option{display:block;width:100%;padding:12px 14px;border:0;border-bottom:1px solid #e5e7eb;background:#fff;color:#172033;text-align:left;font:inherit;cursor:pointer}
+    .suggestion-option:hover,.suggestion-option:focus{background:#edf3ff;outline:2px solid #2457c5;outline-offset:-2px}
+  </style>
 </head>
 <body>
   <main class="app">
@@ -28,7 +34,10 @@
       <div class="account-bar"><span id="signed-in-as"></span><button id="logout-button" class="secondary" type="button">登出</button></div>
       <form id="search-form" class="panel">
         <label for="search-name">輸入產品名</label>
-        <div class="search-row"><input id="search-name" type="search" placeholder="輸入產品名稱" autocomplete="off" required><button type="submit">查詢</button></div>
+        <div class="search-box">
+          <div class="search-row"><input id="search-name" type="search" placeholder="輸入部分產品名稱" autocomplete="off" aria-autocomplete="list" aria-controls="product-suggestions" required><button type="submit">查詢</button></div>
+          <div id="product-suggestions" class="suggestion-list hidden" role="listbox" aria-label="相符產品"></div>
+        </div>
       </form>
       <p id="status" class="status" role="status" aria-live="polite">登入後即可查詢共用資料。</p>
       <section id="result" class="panel hidden" aria-live="polite">
@@ -37,7 +46,7 @@
         <button id="edit-button" class="secondary" type="button">變更</button>
       </section>
       <section id="not-found" class="panel hidden">
-        <h2>無產品</h2><p>是否新增此產品？</p>
+        <h2>無產品</h2><p>找不到相符產品。是否新增此產品？</p>
         <div class="actions"><button id="yes-add" type="button">是，新增</button><button id="no-add" class="secondary" type="button">否，返回首頁</button></div>
       </section>
       <form id="product-form" class="panel hidden">
