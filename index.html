@@ -21,6 +21,7 @@
         <input id="password" type="password" autocomplete="current-password" required>
         <button type="submit">登入</button>
       </form>
+      <p id="login-error" class="status error hidden" role="alert" aria-live="assertive"></p>
     </section>
 
     <section id="inventory-panel" class="hidden">
@@ -30,18 +31,15 @@
         <div class="search-row"><input id="search-name" type="search" placeholder="輸入產品名稱" autocomplete="off" required><button type="submit">查詢</button></div>
       </form>
       <p id="status" class="status" role="status" aria-live="polite">登入後即可查詢共用資料。</p>
-
       <section id="result" class="panel hidden" aria-live="polite">
         <h2 id="product-title"></h2>
         <dl><div><dt>代碼</dt><dd id="product-code"></dd></div><div><dt>庫存位置</dt><dd id="product-location"></dd></div></dl>
         <button id="edit-button" class="secondary" type="button">變更</button>
       </section>
-
       <section id="not-found" class="panel hidden">
         <h2>無產品</h2><p>是否新增此產品？</p>
         <div class="actions"><button id="yes-add" type="button">是，新增</button><button id="no-add" class="secondary" type="button">否，返回首頁</button></div>
       </section>
-
       <form id="product-form" class="panel hidden">
         <h2 id="form-title">新增產品</h2>
         <label for="form-name">產品名</label><input id="form-name" required>
