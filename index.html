@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#2457c5"><title>產品庫存查詢</title><link rel="stylesheet" href="styles.css">
+</head>
+<body><main class="app"><header><h1>產品庫存查詢</h1></header>
+<form id="search-form" class="panel"><label for="search-name">輸入產品名</label><div class="search-row"><input id="search-name" type="search" placeholder="輸入產品名稱" autocomplete="off" required><button type="submit">查詢</button></div></form>
+<p id="status" class="status" role="status" aria-live="polite">輸入產品名即可查詢。</p>
+<section id="result" class="panel hidden" aria-live="polite"><h2 id="product-title"></h2><dl><div><dt>代碼</dt><dd id="product-code"></dd></div><div><dt>庫存位置</dt><dd id="product-location"></dd></div></dl><button id="edit-button" class="secondary" type="button">變更</button></section>
+<section id="not-found" class="panel hidden"><h2>無產品</h2><p>是否新增此產品？</p><div class="actions"><button id="yes-add" type="button">是，新增</button><button id="no-add" class="secondary" type="button">否，返回首頁</button></div></section>
+<form id="product-form" class="panel hidden"><h2 id="form-title">新增產品</h2><label for="form-name">產品名</label><input id="form-name" required><label for="form-code">代碼</label><input id="form-code" required><label for="form-location">庫存位置</label><input id="form-location" required><div class="actions"><button type="submit">儲存</button><button id="cancel-form" class="secondary" type="button">取消</button></div></form>
+<footer>資料目前儲存在這個瀏覽器；清除瀏覽器資料會一併清除產品資料。</footer></main><script src="app.js"></script></body></html>
