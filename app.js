@@ -1,14 +1,15 @@
 const $ = (id) => document.getElementById(id);
 const config = window.INVENTORY_SUPABASE_CONFIG || {};
 const configReady = Boolean(
-  config.url &&
-  config.anonKey &&
+  config.url && config.anonKey &&
   !config.url.includes('PASTE_') &&
   !config.anonKey.includes('PASTE_')
 );
 let client = null;
 let selectedProduct = null;
 let formMode = 'add';
+let suggestionTimer = null;
+let suggestionVersion = 0;
 
 const authPanel = $('auth-panel');
 const inventoryPanel = $('inventory-panel');
@@ -17,6 +18,7 @@ const result = $('result');
 const notFound = $('not-found');
 const productForm = $('product-form');
 const searchName = $('search-name');
+const suggestionList = $('product-suggestions');
 const loginError = $('login-error');
 
 function showLoginError(message) {
@@ -32,8 +34,15 @@ function hideProductPanels() {
   notFound.classList.add('hidden');
   productForm.classList.add('hidden');
 }
+function clearSuggestions() {
+  suggestionVersion += 1;
+  clearTimeout(suggestionTimer);
+  suggestionList.replaceChildren();
+  suggestionList.classList.add('hidden');
+}
 function showProduct(product, message = '查詢成功。') {
   hideProductPanels();
+  clearSuggestions();
   selectedProduct = product;
   $('product-title').textContent = product.name;
   $('product-code').textContent = product.code;
@@ -49,6 +58,8 @@ function setSignedIn(user) {
     setStatus('登入成功，資料與授權使用者共用。');
   } else {
     hideProductPanels();
+    clearSuggestions();
+    selectedProduct = null;
   }
 }
 function friendlyError(error) {
@@ -60,17 +71,53 @@ function friendlyError(error) {
   if (/duplicate key|products_name_key/i.test(message)) return '這個產品名稱已存在。';
   return message;
 }
-async function lookupProduct(name) {
+function escapeLike(value) {
+  return value.replace(/[\\%_*]/g, '\\$&');
+}
+async function searchProducts(term, limit = 10) {
   const { data, error } = await client
     .from('products')
     .select('id,name,code,location')
-    .ilike('name', name)
-    .maybeSingle();
+    .ilike('name', `%${escapeLike(term)}%`)
+    .order('name')
+    .limit(limit);
   if (error) throw error;
-  return data;
+  return data || [];
+}
+function renderSuggestions(products) {
+  suggestionList.replaceChildren();
+  for (const product of products) {
+    const option = document.createElement('button');
+    option.type = 'button';
+    option.className = 'suggestion-option';
+    option.setAttribute('role', 'option');
+    option.textContent = product.name;
+    option.addEventListener('click', () => {
+      searchName.value = product.name;
+      showProduct(product);
+    });
+    suggestionList.appendChild(option);
+  }
+  suggestionList.classList.toggle('hidden', products.length === 0);
+}
+function onSearchInput() {
+  clearSuggestions();
+  const term = searchName.value.trim();
+  if (!client || !term) return;
+  const version = suggestionVersion;
+  suggestionTimer = setTimeout(async () => {
+    try {
+      const products = await searchProducts(term);
+      if (version !== suggestionVersion || searchName.value.trim() !== term) return;
+      renderSuggestions(products);
+    } catch (error) {
+      if (version === suggestionVersion) setStatus(friendlyError(error), true);
+    }
+  }, 250);
 }
 function openForm(mode, product = null) {
   hideProductPanels();
+  clearSuggestions();
   formMode = mode;
   $('form-title').textContent = mode === 'edit' ? '變更產品資料' : '新增產品';
   $('form-name').value = product?.name || searchName.value.trim();
@@ -110,21 +157,31 @@ $('logout-button').addEventListener('click', async () => {
   const { error } = await client.auth.signOut();
   if (error) setStatus(friendlyError(error), true);
 });
-
+searchName.addEventListener('input', onSearchInput);
+searchName.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') clearSuggestions();
+});
+document.addEventListener('click', (event) => {
+  if (!event.target.closest('.search-box')) clearSuggestions();
+});
 $('search-form').addEventListener('submit', async (event) => {
   event.preventDefault();
-  const name = searchName.value.trim();
-  if (!name) return;
+  const term = searchName.value.trim();
+  if (!term) return;
+  clearSuggestions();
   hideProductPanels();
   setStatus('查詢中…');
   try {
-    const product = await lookupProduct(name);
-    if (product) {
-      showProduct(product);
+    const products = await searchProducts(term, 20);
+    if (products.length === 1) {
+      showProduct(products[0]);
+    } else if (products.length > 1) {
+      renderSuggestions(products);
+      setStatus('找到多筆相符產品，請從下拉清單選擇。');
     } else {
       selectedProduct = null;
       notFound.classList.remove('hidden');
-      setStatus('找不到這項產品。');
+      setStatus('找不到相符產品。');
     }
   } catch (error) {
     setStatus(friendlyError(error), true);
@@ -134,6 +191,7 @@ $('search-form').addEventListener('submit', async (event) => {
 $('yes-add').addEventListener('click', () => openForm('add'));
 $('no-add').addEventListener('click', () => {
   hideProductPanels();
+  clearSuggestions();
   searchName.value = '';
   selectedProduct = null;
   setStatus('已返回首頁。');
@@ -142,7 +200,6 @@ $('no-add').addEventListener('click', () => {
 $('edit-button').addEventListener('click', () => {
   if (selectedProduct) openForm('edit', selectedProduct);
 });
-
 productForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   const product = {
@@ -170,7 +227,6 @@ productForm.addEventListener('submit', async (event) => {
     button.disabled = false;
   }
 });
-
 $('cancel-form').addEventListener('click', () => {
   hideProductPanels();
   if (formMode === 'edit' && selectedProduct) showProduct(selectedProduct, '已取消變更。');
