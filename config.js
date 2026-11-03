@@ -1,4 +1,4 @@
 window.INVENTORY_SUPABASE_CONFIG = {
   url: 'https://yjvtedwjjbnfagbyaovj.supabase.co',
-  anonKey: '貼上 Supabase 頁面複製的完整 Publishable key'
+  anonKey: 'sb_publishable_ULwiX1FaC_QKDD14Mw_cuQ_q95F8-6u'
 };
